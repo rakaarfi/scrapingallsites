@@ -31,9 +31,6 @@ def detik_multi_page(base_url):
   # Extract detailed information and its index from all link.
   all_info, index = data_detik(all_results)
 
-  # with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-  #   executor.map(data_detik, all_results)
-
   # Store all info to a dictionary.
   data = create_dict(resource=base_url, count=index+1, data=all_info)
 
@@ -52,7 +49,7 @@ def kompas_multi_page(base_url):
 
   all_results = []
   for i in range(1):
-    url = f"{base_url + "&page=" + str(i+1)}"
+    url = base_url+'&page='+str(i+1)
     print(url) # Print URL for debugging
 
     # Put the scraping per page function inside the loop
@@ -63,15 +60,7 @@ def kompas_multi_page(base_url):
   # Extract detailed information and its index from all link.
   all_info, index = data_kompas(all_results)
 
-  # with concurrent.futures.ThreadPoolExecutor(max_workers=8) as executor:
-  #   executor.map(data_kompas, all_results)
-
   # Store all info to a dictionary.
   data = create_dict(resource=base_url, count=index+1, data=all_info)
 
   return data
-
-if __name__ == '__main__':
-  url = 'https://indeks.kompas.com/?site=news'
-  result = kompas_multi_page(base_url=url)
-  print(result)

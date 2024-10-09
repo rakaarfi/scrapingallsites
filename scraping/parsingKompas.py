@@ -1,5 +1,6 @@
 import requests
 from scraping.requesting import get_requests
+# from requesting import get_requests
 
 # Extract all links
 def get_links(soup):
@@ -92,27 +93,11 @@ def get_info(link):
 
     # Get Content
     content = validate_info(tag='div', classes='read__content', soup=soup)
-    ## If content found
-    if content:
-      ## Get first <strong>
-      strong_element = content.find('strong')
-      ## Get Paragraphs
-      paragraphs = content.find_all('p')
-
-      filtered_paragraphs = []
-      # Adding the first <strong> if strong_element found
-      if strong_element:
-        filtered_paragraphs.append(strong_element)
-
-      for p in paragraphs:
-        if p.find('strong') or p.find('a'):
-          continue # Excluding tag strong and tag a from paragraphs
-
-        filtered_paragraphs.append(p)
-
-      info['Content'] = filtered_paragraphs
-    else:
-      info['Content'] = "No Content Found"
+    p_tags = content.find_all('p')
+    p = []
+    for i in p_tags:      
+      p.append(i.get_text())
+    info["Content"] = p
 
   else:
     print(f"Failed to extract info. Status code: {status}")
@@ -143,6 +128,7 @@ if __name__ == "__main__":
   # link = get_links(soup)
   # info, index = get_info_all_links(links=link)
 
-  link = 'https://megapolitan.kompas.com/read/2024/10/05/17581561/debat-pilkada-jakarta-memuluskan-transformasi-jadi-kota-global'
+  # link = 'https://megapolitan.kompas.com/read/2024/10/05/17581561/debat-pilkada-jakarta-memuluskan-transformasi-jadi-kota-global'
+  link = 'https://www.kompas.com/hype/read/2024/10/09/120752466/lima-bulan-bercerai-dodhy-kangen-band-menikahi-ayu-rizki-lagi'
   content = get_info(link)
   print(content)
