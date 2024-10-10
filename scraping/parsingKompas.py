@@ -42,7 +42,7 @@ def get_info(link):
     title_tag = validate_info(tag='h1', classes='read__title', soup=soup)
     ## If title_tag is found, extract and get the text
     if title_tag:
-      title = title_tag.get_text(strip=True)
+      title = title_tag.text.strip()
     ## If title_tag isn't found:
     else:
       title = "Title Not Found"
@@ -85,18 +85,18 @@ def get_info(link):
     else:
       img_url = 'No Image URL Found'
 
-    info['Link'] = link
-    info['Title'] = title
-    info['Date'] = date_time
-    info['Author'] = author
-    info['Image URL'] = img_url
-
     # Get Content
     content = validate_info(tag='div', classes='read__content', soup=soup)
     p_tags = content.find_all('p')
     p = []
     for i in p_tags:      
       p.append(i.get_text())
+
+    info['Link'] = link
+    info['Title'] = title
+    info['Date'] = date_time
+    info['Author'] = author
+    info['Image URL'] = img_url
     info["Content"] = p
 
   else:

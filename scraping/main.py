@@ -1,5 +1,8 @@
 import requests
-import concurrent.futures
+import pandas as pd
+from fastapi.responses import StreamingResponse
+from datetime import datetime
+from io import StringIO
 
 # (Nama folder) + (.) + (nama file) import 
 from scraping.requesting import get_requests
@@ -15,7 +18,7 @@ def detik_per_page(url, session):
 
   return result_link_detik
 
-def detik_multi_page(base_url):
+def detik_multi_page(base_url, format:str="json"):
   session = requests.Session()
 
   all_results = []
@@ -34,7 +37,24 @@ def detik_multi_page(base_url):
   # Store all info to a dictionary.
   data = create_dict(resource=base_url, count=index+1, data=all_info)
 
-  return data
+  if format == "json":
+    return data
+  
+  elif format == "csv":
+    df = pd.DataFrame(data)
+
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+    csv_buffer.seek(0)
+
+    generated_time = datetime.now().strftime('%Y-%m-%d_%H%M%S')
+    csv_data = f"{base_url[13:18]}_{generated_time}.csv"
+
+    return  StreamingResponse(
+        csv_buffer,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={csv_data}"}
+    )
 
 def kompas_per_page(url, session):
   # Sends requests with a session.

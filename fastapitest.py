@@ -19,6 +19,7 @@ class Item(BaseModel):
   source: str
   category: str | None = None
   page: int | None = None
+  format: str | None = None
 
 @app.post("/scrape")
 async def scraping(item:Item):
@@ -29,7 +30,7 @@ async def scraping(item:Item):
       site = allsites.DETIK_BUSINESS
     elif item.category == "top-news":
       site = allsites.DETIK_TOPNEWS
-    return detik_multi_page(base_url=site)
+    return detik_multi_page(base_url=site, format=item.format)
   
   if item.source == "kompas":
     if item.category == "news":
