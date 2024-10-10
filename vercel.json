@@ -1,0 +1,14 @@
+{
+  "builds":[
+    {
+      "src": "fastapitest.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes":[
+    {
+      "src":"/(.*)",
+      "dest": "fastapitest.py"
+    }
+  ]
+}
