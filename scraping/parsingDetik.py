@@ -1,24 +1,19 @@
 import requests
 
 from scraping.requesting import get_requests
+# from requesting import get_requests
 
 # Extract all links
 def get_link(soup):
-  # Find tag that have link inside
-  try:
-    article = soup.find('div', class_='grid-row list-content')
-  except AttributeError as e:
-    article = None
-    print(soup)
-
-  # Find all links inside above tag
-  links = article.find_all('h3', class_='media__title')
+# Find all links tag
+  links = soup.find_all('a', class_='media__link')
+  if not links:
+    links = soup.find_all('a', class_='flex gap-4 group items-center')
 
   # Iterate each link to an empty list
   link_list = []
   for link in links:
-    link_tag = link.find('a', class_='media__link')
-    href = link_tag.get('href')
+    href = link.get('href')
 
     # Excluding some from link
     if len(href) > 50 and "https://20.detik.com/" not in href and ".com/foto-" not in href:
@@ -84,3 +79,14 @@ def get_info_all_links(links):
   print(f"Total links extracted are {len(links)}")
 
   return all_info, index
+
+if __name__ == "__main__":
+  session = requests.Session()
+  soup, status = get_requests(url='https://www.detik.com/pop/indeks/', session=session)
+  link = get_link(soup)
+  # info, index = get_info_all_links(links=link)
+
+  # # link = 'https://megapolitan.kompas.com/read/2024/10/05/17581561/debat-pilkada-jakarta-memuluskan-transformasi-jadi-kota-global'
+  # link = 'https://www.kompas.com/hype/read/2024/10/09/120752466/lima-bulan-bercerai-dodhy-kangen-band-menikahi-ayu-rizki-lagi'
+  # content = get_info(link)
+  print(link)

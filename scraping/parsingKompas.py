@@ -119,7 +119,7 @@ def get_info_all_links(links):
     if info:
       info["Index"] = index + 1
       all_info.append(info)
-    print("Info added.")
+    print(link)
   return all_info, index
 
 if __name__ == "__main__":
