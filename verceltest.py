@@ -2,6 +2,6 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
-@app.get("/test")
+@app.get("/")
 def testing():
   return 1
