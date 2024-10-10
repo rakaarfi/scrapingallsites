@@ -24,7 +24,7 @@ def detik_multi_page(base_url, format:str="json"):
   all_results = []
   for i in range(1):
     url = f"{base_url + str(i+1)}"
-    print(url) # Print URL for debugging
+    # print(url) # Print URL for debugging
 
     # Put the scraping per page function inside the loop
     result_detik = detik_per_page(url, session=session)
@@ -43,13 +43,16 @@ def detik_multi_page(base_url, format:str="json"):
   elif format == "csv":
     df = pd.DataFrame(data)
 
+    # Make CSV in string with StringIO
     csv_buffer = StringIO()
     df.to_csv(csv_buffer, index=False)
     csv_buffer.seek(0)
 
+    # Configurate the name file with timestamp
     generated_time = datetime.now().strftime('%Y-%m-%d_%H%M%S')
-    csv_data = f"{base_url[13:18]}_{generated_time}.csv"
+    csv_data = f"detik_{generated_time}.csv"
 
+    # Return the response as CSV file
     return  StreamingResponse(
         csv_buffer,
         media_type="text/csv",
@@ -64,7 +67,7 @@ def kompas_per_page(url, session):
 
   return result_link_kompas
 
-def kompas_multi_page(base_url):
+def kompas_multi_page(base_url, format:str="json"):
   session = requests.Session()
 
   all_results = []
@@ -83,4 +86,24 @@ def kompas_multi_page(base_url):
   # Store all info to a dictionary.
   data = create_dict(resource=base_url, count=index+1, data=all_info)
 
-  return data
+  if format == "json":
+    return data
+
+  elif format == "csv":
+    df = pd.DataFrame(data)
+
+    # Make CSV in string with StringIO
+    csv_buffer = StringIO()
+    df.to_csv(csv_buffer, index=False)
+    csv_buffer.seek(0)
+
+    # Configurate the name file with timestamp
+    generated_time = datetime.now().strftime('%Y-%m-%d_%H%M%S')
+    csv_data = f"kompas_{generated_time}.csv"
+
+    # Configurate the name file with timestamp
+    return  StreamingResponse(
+        csv_buffer,
+        media_type="text/csv",
+        headers={"Content-Disposition": f"attachment; filename={csv_data}"}
+    )
