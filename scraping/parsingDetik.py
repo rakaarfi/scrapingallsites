@@ -6,9 +6,8 @@ from scraping.requesting import get_requests
 # Extract all links
 def get_link(soup):
 # Find all links tag
-  links = soup.find_all('a', class_='media__link')
-  if not links:
-    links = soup.find_all('a', class_='flex gap-4 group items-center')
+  links = (soup.find_all('a', class_='media__link') or 
+           soup.find_all('a', class_='flex gap-4 group items-center'))
 
   # Iterate each link to an empty list
   link_list = []
@@ -18,8 +17,10 @@ def get_link(soup):
     # Excluding some from link
     if len(href) > 50 and "https://20.detik.com/" not in href and ".com/foto-" not in href:
       link_list.append(href)
+
+  no_duplicate_link = [i for n, i in enumerate(link_list) if i not in link_list[:n]]
   
-  return link_list
+  return no_duplicate_link
 
 # Extract img URL, Title, Content, author, date
 def get_info(link):
@@ -35,19 +36,24 @@ def get_info(link):
     # Find tag that have link inside
     article = soup.find('article', class_='detail')
 
-    # Find title, author, date, img url
-    try:
-      img = article.find('img').get('src')
-    except AttributeError as e:
-      img = None
-      print(f"An exception occurred in Image: {e}")
+    # Get Image URL
+    img = validate_info(tag='img', classes=None, article=article).get('src')
 
-    title = validate_info(tag='h1', classes='detail__title', article=article).get_text(strip=True)
-    author = validate_info(tag='div', classes='detail__author', article=article).get_text(strip=True)
-    date = validate_info(tag='div', classes='detail__date', article=article).get_text(strip=True)    
+    # Get Title
+    title = (safe_get_text(tag='h1', classes='detail__title', article=article) or
+              safe_get_text(tag='h1', classes='text-center text-[32px] leading-10 mb-2.5', article=article))
+    
+    # Get Author
+    author = (safe_get_text(tag='div', classes='detail__author', article=article) or
+              safe_get_text(tag='div', classes='text-[#8B8B8B]', article=article))
 
-    # Find content
-    content = validate_info(tag='div', classes='detail__body-text itp_bodycontent', article=article).get_text(strip=True)
+    # Get Date
+    date = (safe_get_text(tag='div', classes='detail__date', article=article) or
+            safe_get_text(tag='time', classes='text-[#8B8B8B] text-[13px] text-center', article=article))
+
+    # Get Content
+    content = (safe_get_text(tag='div', classes='detail__body-text itp_bodycontent', article=article) or 
+               safe_get_text(tag='div', classes='detail__body flex-grow min-w-0 font-helvetica text-lg itp_bodycontent', article=article))
 
     # Add info to the empty dictionary
     info["Link"] = link
@@ -56,7 +62,15 @@ def get_info(link):
     info["Date"] = date
     info["Image URL"] = img
     info["Content"] = content
+
+  else:
+    print(f"Failed to extract info. Status code: {status}")
   return info
+
+# Helper function to safely get text
+def safe_get_text(tag, classes, article):
+    result = validate_info(tag, classes, article)
+    return result.get_text(strip=True) if result else ''
 
 # Validating info
 def validate_info(tag, classes, article):
@@ -84,9 +98,11 @@ if __name__ == "__main__":
   session = requests.Session()
   soup, status = get_requests(url='https://www.detik.com/pop/indeks/', session=session)
   link = get_link(soup)
-  # info, index = get_info_all_links(links=link)
 
-  # # link = 'https://megapolitan.kompas.com/read/2024/10/05/17581561/debat-pilkada-jakarta-memuluskan-transformasi-jadi-kota-global'
-  # link = 'https://www.kompas.com/hype/read/2024/10/09/120752466/lima-bulan-bercerai-dodhy-kangen-band-menikahi-ayu-rizki-lagi'
+  # link = 'https://news.detik.com/pilkada/d-7581230/kampanye-di-jakbar-rk-janji-promosikan-2-umkm-di-instagramnya-setiap-hari'
+  # link = 'https://www.detik.com/pop/trending/d-7581239/sandra-dewi-menyesal-harvey-moeis-kerja-sama-dengan-bumn-sampai-masuk-bui'
   # content = get_info(link)
-  print(link)
+  # print(content)
+
+  all_info, index = get_info_all_links(links=link)
+  print(all_info)

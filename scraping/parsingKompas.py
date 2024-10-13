@@ -32,66 +32,35 @@ def get_info(link):
     return info
 
   info = {}
-  title = None
-  date_time = None
-  author = None
-  img_url = None
-  content = None
+
   if status == 200:
     # Get Title
     title_tag = validate_info(tag='h1', classes='read__title', soup=soup)
-    ## If title_tag is found, extract and get the text
-    if title_tag:
-      title = title_tag.text.strip()
-    ## If title_tag isn't found:
-    else:
-      title = "Title Not Found"
+    title = title_tag.text.strip() if title_tag else "Title Not Found"
 
     # Get Date Tag
     date_tag = validate_info(tag='div', classes='read__time', soup=soup)
-    ## If date_tag is found, extract and get the text
+    ## extract and get the text if date_tag is found, 
     if date_tag:
       date_text = date_tag.text.strip()
-
-      # Check if the text contains the " - "
-      if ' - ' in date_text:
-        date_time = date_text.split(" - ")[1]
-      else:
-        date_time = "Date format incorrect"
-    ## If date_tag isn't found
+      date_time = date_text.split(" - ")[1] if ' - ' in date_text else "Date format incorrect"
     else:
       date_time = "Date Not Found"
 
     # Get Author
-    ## Get Author from class:'credit-title-name'
-    author_tag = validate_info(tag='div', classes='credit-title-name', soup=soup)
-    if author_tag:
-      author = author_tag.get_text(strip=True)
-    ## If not found from above class:
-    else:
-      author_tag = validate_info(tag='div', classes='opinion__author', soup=soup)
-      if author_tag:
-        author = author_tag.get_text(strip=True)
-    ## If both of them not found:
-    if not author:
-      author = "No Author Found"
+    author_tag = validate_info(tag='div', classes='credit-title-name', soup=soup) or validate_info(tag='div', classes='opinion__author', soup=soup)
+    author = author_tag.get_text(strip=True) if author_tag else "No author found"
 
     # Get Image Tag
     img_tag = validate_info(tag='div', classes='photo__wrap', soup=soup)
-    # If img_tag found:
-    if img_tag:
-      img_url = img_tag.find('img').get('src')
-    # If img_tag not found:
-    else:
-      img_url = 'No Image URL Found'
+    img_url = img_tag.find('img').get('src') if img_tag else "No Image URL found"
 
     # Get Content
     content = validate_info(tag='div', classes='read__content', soup=soup)
     p_tags = content.find_all('p')
-    p = []
-    for i in p_tags:      
-      p.append(i.get_text())
+    p = [i.get_text() for i in p_tags]
 
+    # Add info to the empty dictionary
     info['Link'] = link
     info['Title'] = title
     info['Date'] = date_time
@@ -101,13 +70,6 @@ def get_info(link):
 
   else:
     print(f"Failed to extract info. Status code: {status}")
-    info['Link'] = link
-    info['Title'] = "Title Not Found"
-    info['Date'] = "Date Not Found"
-    info['Author'] = "No Author Found"
-    info['Image URL'] = "No Image URL Found"
-    info['Content'] = "No Content Found"
-
   return info
 
 # Get info from all links
