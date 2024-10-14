@@ -1,6 +1,5 @@
 import requests
 from scraping.requesting import get_requests
-# from requesting import get_requests
 
 # Extract all links
 def get_links(soup):
@@ -12,7 +11,6 @@ def get_links(soup):
     link = i.get('href')
     link_list.append(link)
 
-  print(f"The total of extracted links is {len(link_list)}")
   return link_list
 
 # Extract Title, Date, Author, Image URL, Content/Paragraphs
@@ -77,20 +75,7 @@ def get_info_all_links(links):
   all_info = []
   for index, link in enumerate(links):
     info = get_info(link=link)
-    print(f"Extracting {index+1} out of {len(links)}.")
     if info:
       info["Index"] = index + 1
       all_info.append(info)
-    print(link)
   return all_info, index
-
-if __name__ == "__main__":
-  session = requests.Session()
-  # soup, status = get_requests(url='https://indeks.kompas.com/?site=news', session=session)
-  # link = get_links(soup)
-  # info, index = get_info_all_links(links=link)
-
-  # link = 'https://megapolitan.kompas.com/read/2024/10/05/17581561/debat-pilkada-jakarta-memuluskan-transformasi-jadi-kota-global'
-  link = 'https://www.kompas.com/hype/read/2024/10/09/120752466/lima-bulan-bercerai-dodhy-kangen-band-menikahi-ayu-rizki-lagi'
-  content = get_info(link)
-  print(content)

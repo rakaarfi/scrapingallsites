@@ -1,3 +1,4 @@
+import requests
 from scraping.requesting import get_requests
 
 def get_links(soup):
@@ -82,9 +83,6 @@ def get_info_links(link):
 
       # Extract Content
       content_tag = article.find('div', class_='side-article txt-article multi-fontsize').get_text(strip=True)
-      # content_p = content_tag.find_all('p') if content_tag else "Content Tag not found"
-      # content_li = content_tag.find_all('li') if content_tag else "Content Tag not found"
-      # content = [i.get_text() for i in content_p] if content_p else ["No content found"]
 
     else:
       print(f"Article div not found for link: {link}")
@@ -109,24 +107,7 @@ def get_info_all_links(links):
       complete_link = link + "?page=all"
       info = get_info_links(complete_link)
       info['Index'] = index + 1
-      print(f"Extracting link: {complete_link}")
       all_info.append(info)
     except Exception as e:
       print(f"Error extracting info from {complete_link}: {e}")
-  print(f"Total links extracted: {len(all_info)}")
   return all_info, index
-
-import requests
-if __name__ == "__main__":
-  session = requests.Session()
-  url = "https://www.tribunnews.com/news"
-  soup, status = get_requests(url, session=session)
-  links = get_links(soup)
-  # # print(links)
-
-  # url = 'https://www.tribunnews.com/pendidikan/2024/10/11/kunci-jawaban-modul-3-topik-2-ppg-2024-apa-yang-dimaksud-dengan-pendidikan-inklusif?page=all'
-  # info = get_info_links(link=url)
-  # print(info)
-
-  all_info = get_info_all_links(links)
-  print(all_info)

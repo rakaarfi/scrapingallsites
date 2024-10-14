@@ -1,7 +1,6 @@
 import requests
 
 from scraping.requesting import get_requests
-# from requesting import get_requests
 
 # Extract all links
 def get_link(soup):
@@ -37,7 +36,8 @@ def get_info(link):
     article = soup.find('article', class_='detail')
 
     # Get Image URL
-    img = validate_info(tag='img', classes=None, article=article).get('src')
+    # img = validate_info(tag='img', classes=None, article=article).get('src')
+    img = article.find('img').get('src')
 
     # Get Title
     title = (safe_get_text(tag='h1', classes='detail__title', article=article) or
@@ -89,20 +89,5 @@ def get_info_all_links(links):
     if info:
       info["Index"] = index + 1  # Add index to info dict
       all_info.append(info)
-    print(link)
-  print(f"Total links extracted are {len(links)}")
 
   return all_info, index
-
-if __name__ == "__main__":
-  session = requests.Session()
-  soup, status = get_requests(url='https://www.detik.com/pop/indeks/', session=session)
-  link = get_link(soup)
-
-  # link = 'https://news.detik.com/pilkada/d-7581230/kampanye-di-jakbar-rk-janji-promosikan-2-umkm-di-instagramnya-setiap-hari'
-  # link = 'https://www.detik.com/pop/trending/d-7581239/sandra-dewi-menyesal-harvey-moeis-kerja-sama-dengan-bumn-sampai-masuk-bui'
-  # content = get_info(link)
-  # print(content)
-
-  all_info, index = get_info_all_links(links=link)
-  print(all_info)

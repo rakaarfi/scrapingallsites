@@ -39,18 +39,10 @@ TRIBUN_INTERNASIONAL = 'https://www.tribunnews.com/internasional'
 
 ##localnews
 DETIK_ALL_LOCALNEWS = ["https://www.detik.com/jatim/indeks/", "https://www.detik.com/jateng/indeks/", "https://www.detik.com/jabar/indeks/", "https://www.detik.com/sulsel/indeks/", "https://www.detik.com/sumut/indeks/", "https://www.detik.com/bali/indeks/", "https://www.detik.com/sumbagsel/indeks/", "https://www.detik.com/jogja/indeks/"]
-
 KOMPAS_ALL_LOCALNEWS = ["https://indeks.kompas.com/?site=nasional", "https://indeks.kompas.com/?site=regional", "https://indeks.kompas.com/?site=megapolitan"]
-
 TRIBUN_ALL_LOCALNEWS = ['https://www.tribunnews.com/nasional', 'https://www.tribunnews.com/regional', 'https://www.tribunnews.com/metropolitan']
 
 #travel
 DETIK_ALL_TRAVEL = ["https://travel.detik.com/indeks/", "https://food.detik.com/indeks/"]
-
 KOMPAS_ALL_TRAVEL = ["https://indeks.kompas.com/?site=food", "https://indeks.kompas.com/?site=travel"]
-
 TRIBUN_TRAVEL = 'https://www.tribunnews.com/travel'
-
-
-
-

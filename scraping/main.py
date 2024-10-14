@@ -10,6 +10,7 @@ from scraping.parsingDetik import get_link as link_detik, get_info_all_links as 
 from scraping.parsingKompas import get_links as link_kompas, get_info_all_links as data_kompas
 from scraping.parsingTribun import get_links as link_tribun, get_info_all_links as data_tribun
 from scraping.exporting import create_dict
+import allsitesdict
 
 def detik_per_page(url, session):
   # Sends requests with a session.
