@@ -31,13 +31,15 @@ def get_info(link):
   soup, status = get_requests(url=link, session=session)
 
   info = {}
+  img = None
   if status == 200:
     # Find tag that have link inside
     article = soup.find('article', class_='detail')
 
     # Get Image URL
     # img = validate_info(tag='img', classes=None, article=article).get('src')
-    img = article.find('img').get('src')
+    img_tag = article.find('img') if article else "Image tag not found"
+    img = img_tag.get('src') if img_tag else "Image not found"
 
     # Get Title
     title = (safe_get_text(tag='h1', classes='detail__title', article=article) or
