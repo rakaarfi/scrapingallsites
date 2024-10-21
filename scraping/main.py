@@ -24,12 +24,9 @@ def detik_multi_page(base_url, format:str="json"):
   session = requests.Session()
 
   all_results = []
-  for i in range(1):
-    url = f"{base_url + str(i+1)}"
-    # print(url) # Print URL for debugging
-
+  for url_category in base_url:
     # Put the scraping per page function inside the loop
-    result_detik = detik_per_page(url, session=session)
+    result_detik = detik_per_page(url=url_category, session=session)
     # Add the result in the empty list
     all_results.extend(result_detik)
 
@@ -73,12 +70,9 @@ def kompas_multi_page(base_url, format:str="json"):
   session = requests.Session()
 
   all_results = []
-  for i in range(1):
-    url = base_url+'&page='+str(i+1)
-    print(url) # Print URL for debugging
-
+  for url_category in base_url:
     # Put the scraping per page function inside the loop
-    result_kompas = kompas_per_page(url, session=session)
+    result_kompas = kompas_per_page(url=url_category, session=session)
     # Add the result in the empty list
     all_results.extend(result_kompas)
 
@@ -122,9 +116,8 @@ def tribun_multi_page(base_url, format:str="json"):
   session = requests.Session()
 
   all_results = []
-  for i in range(1):
-    url = base_url + "?page=all"
-    print(url) # Print URL for debugging
+  for url_category in base_url:
+    url = url_category + "?page=all"
 
     # Put the scraping per page function inside the loop
     result_tribun = tribun_per_page(url, session=session)
