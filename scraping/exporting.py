@@ -1,7 +1,7 @@
 from datetime import datetime
 
 # Main function to create the dictionary
-def create_dict(resource, count, data):
+def create_dict(resource, data):
     # Generate current time
     generated_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
@@ -10,7 +10,6 @@ def create_dict(resource, count, data):
         "Status Code": 200,
         "Message": "OK",
         "Resource": resource,
-        "Count": count,
         "Generated Time": generated_time,
         "Data": data
     }                                                                                      

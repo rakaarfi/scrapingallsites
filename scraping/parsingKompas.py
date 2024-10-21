@@ -1,4 +1,6 @@
 import requests
+from concurrent.futures import ThreadPoolExecutor
+
 from scraping.requesting import get_requests
 
 # Extract all links
@@ -38,7 +40,7 @@ def get_info(link):
 
     # Get Date Tag
     date_tag = validate_info(tag='div', classes='read__time', soup=soup)
-    ## extract and get the text if date_tag is found, 
+    ## Extract and get the text if date_tag is found
     if date_tag:
       date_text = date_tag.text.strip()
       date_time = date_text.split(" - ")[1] if ' - ' in date_text else "Date format incorrect"
@@ -54,9 +56,8 @@ def get_info(link):
     img_url = img_tag.find('img').get('src') if img_tag else "No Image URL found"
 
     # Get Content
-    content = validate_info(tag='div', classes='read__content', soup=soup)
-    p_tags = content.find_all('p')
-    p = [i.get_text() for i in p_tags]
+    content_tag = validate_info(tag='div', classes='read__content', soup=soup)
+    content = content_tag.get_text() if content_tag else "No content found"
 
     # Add info to the empty dictionary
     info['Link'] = link
@@ -64,7 +65,7 @@ def get_info(link):
     info['Date'] = date_time
     info['Author'] = author
     info['Image URL'] = img_url
-    info["Content"] = p
+    info["Content"] = content
 
   else:
     print(f"Failed to extract info. Status code: {status}")
@@ -72,10 +73,9 @@ def get_info(link):
 
 # Get info from all links
 def get_info_all_links(links):
-  all_info = []
-  for index, link in enumerate(links):
-    info = get_info(link=link)
-    if info:
-      info["Index"] = index + 1
-      all_info.append(info)
-  return all_info, index
+
+  # Create a thread pool to process multiple links concurrently
+  executor = ThreadPoolExecutor()
+  all_info = list(executor.map(get_info, links))
+  
+  return all_info

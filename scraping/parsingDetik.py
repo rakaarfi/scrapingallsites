@@ -1,4 +1,5 @@
 import requests
+from concurrent.futures import ThreadPoolExecutor
 
 from scraping.requesting import get_requests
 
@@ -13,9 +14,12 @@ def get_link(soup):
   for link in links:
     href = link.get('href')
 
+    # Add ?single=1 to extract all pages from the news
+    complete_link = href + "?single=1"
+
     # Excluding some from link
-    if len(href) > 50 and "https://20.detik.com/" not in href and ".com/foto-" not in href:
-      link_list.append(href)
+    if len(complete_link) > 50 and "https://20.detik.com/" not in complete_link and ".com/foto-" not in complete_link:
+      link_list.append(complete_link)
 
   no_duplicate_link = [i for n, i in enumerate(link_list) if i not in link_list[:n]]
   
@@ -23,10 +27,6 @@ def get_link(soup):
 
 # Extract img URL, Title, Content, author, date
 def get_info(link):
-
-  # Add ?single=1 to extract all pages from the news
-  link = link + "?single=1"
-
   session = requests.Session()
   soup, status = get_requests(url=link, session=session)
 
@@ -85,11 +85,9 @@ def validate_info(tag, classes, article):
 
 # Extracting all info from all links
 def get_info_all_links(links):
-  all_info = []
-  for index, link in enumerate(links):
-    info = get_info(link=link)
-    if info:
-      info["Index"] = index + 1  # Add index to info dict
-      all_info.append(info)
 
-  return all_info, index
+  # Create a thread pool to process multiple links concurrently
+  executor = ThreadPoolExecutor()
+  all_info = list(executor.map(get_info, links))
+
+  return all_info

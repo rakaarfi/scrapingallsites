@@ -1,4 +1,6 @@
 import requests
+from concurrent.futures import ThreadPoolExecutor
+
 from scraping.requesting import get_requests
 
 def get_links(soup):
@@ -32,7 +34,10 @@ def get_links(soup):
       # Ensure the trailing '?' or '&' after removing 'utm_campaign' is cleaned up
       clean_href = clean_href.rstrip('?,&')
 
-      links.append(clean_href)
+      # Add ?page=all to extract all pages from the news
+      complete_link = clean_href + "?page=all"
+
+      links.append(complete_link)
 
   unique_links = list(set(links))
   return unique_links
@@ -67,14 +72,16 @@ def get_info_links(link):
       if author_div:
         author_tag = author_div.find('a')
         author = author_tag.get_text() if author_tag else "Author tag not found"
-      else:
+
+      else: #If id:penulis not found, find id:editor
         author_div = article.find('div', attrs={'id':'editor'})
         if author_div:
-          author_tag = author_div.find('a') if author_div else "editor div not found"
-          author = author_tag.get_text() if author_tag else "editor not found"
-        else:
+          author_tag = author_div.find('a') if author_div else "Editor div not found"
+          author = author_tag.get_text() if author_tag else "Editor not found"
+
+        else: #If id:editor also not found, find another source
           author_div = article.find('div', attrs={'class':'wfull'})
-          author_tag = author_div.find('a') if author_div else "Author from another web div not found"
+          author_tag = author_div.find('a') if author_div else "Author from another web, div not found"
           author = author_tag.get('title') if author_tag else "Author from another web not found"
 
       # Extract Image URL
@@ -101,13 +108,17 @@ def get_info_links(link):
   return info
 
 def get_info_all_links(links):
-  all_info = []
-  for index, link in enumerate(links):
+  # Error Handling
+  def process_link(link):
     try:
-      complete_link = link + "?page=all"
-      info = get_info_links(complete_link)
-      info['Index'] = index + 1
-      all_info.append(info)
+      info = get_info_links(link)
+      return info
     except Exception as e:
-      print(f"Error extracting info from {complete_link}: {e}")
-  return all_info, index
+      print(f"Error extracting info from {link}: {e}")
+      return None # Return None if an exception occurs
+    
+  # Create a thread pool to process multiple links concurrently
+  executor = ThreadPoolExecutor()
+  all_info = list(executor.map(process_link, links))
+
+  return all_info
