@@ -1,6 +1,6 @@
-from bs4 import BeautifulSoup as bs
 import aiohttp
 import asyncio
+from bs4 import BeautifulSoup as bs
 
 from scraping.requesting import get_requests
 
@@ -29,7 +29,7 @@ def get_link(response_text:str):
   return no_duplicate_link  
 
 # Extract img URL, Title, Content, author, date
-def get_info(response_text:str):
+def get_info(response_text:str, link):
   soup = bs(response_text, 'html.parser')
 
   # Validating info
@@ -74,7 +74,7 @@ def get_info(response_text:str):
               safe_get_text(tag='div', classes='detail__body flex-grow min-w-0 font-helvetica text-lg itp_bodycontent', article=article))
 
   # Add info to the empty dictionary
-  # info["Link"] = link
+  info["Link"] = link
   info["Title"] = title
   info["Author"] = author
   info["Date"] = date
@@ -84,21 +84,29 @@ def get_info(response_text:str):
   return info
 
 # Extracting all info from all links
-def get_info_all_links(response_texts:str):
+def get_info_all_links(response_texts:str, links):
+
   all_info = []
-  for index, response_text in enumerate(response_texts):
-    info = get_info(response_text)
+  # Loop through responses and links with indexing
+  for index, (response_text, link)in enumerate(zip(response_texts, links)):
+    info = get_info(response_text, link)
+
+    print(f"Extracting {index+1} out of {len(links)}.") #Print Statement later deleted
+    
     if info:
       info["Index"] = index + 1  # Add index to info dict
       all_info.append(info)
-  print(f"Total links extracted are {len(response_texts)}")
+
+    print(link) #Print Statement later deleted
 
   return all_info, index
 
+# Asynchronously scrape multiple URLs
 async def scrape_urls(urls):
   async with aiohttp.ClientSession() as session:
+    # Create async tasks for each URL request
     tasks = [get_requests(url, session) for url in urls]
-
+    # Await all tasks and return results
     results = await asyncio.gather(*tasks)
 
     return results

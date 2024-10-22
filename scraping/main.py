@@ -1,17 +1,14 @@
-import requests
-import pandas as pd
-from fastapi.responses import StreamingResponse
-from datetime import datetime
-from io import StringIO
-from concurrent.futures import ThreadPoolExecutor
 import aiohttp
 import asyncio
+import pandas as pd
+from io import StringIO
+from datetime import datetime
+from fastapi.responses import StreamingResponse
 
-# (Nama folder) + (.) + (nama file) import 
 from scraping.requesting import get_requests
-from scraping.parsingDetik import get_link as link_detik, get_info_all_links as data_detik, scrape_urls
-from scraping.parsingKompas import get_links as link_kompas, get_info_all_links as data_kompas
-from scraping.parsingTribun import get_links as link_tribun, get_info_all_links as data_tribun
+from scraping.parsingDetik import get_link as link_detik, get_info_all_links as data_detik, scrape_urls as tasks_detik
+from scraping.parsingKompas import get_links as link_kompas, get_info_all_links as data_kompas, scrape_urls as tasks_kompas
+from scraping.parsingTribun import get_links as link_tribun, get_info_all_links as data_tribun, scrape_urls as tasks_tribun
 from scraping.exporting import create_dict
 
 # DETIK
@@ -23,24 +20,81 @@ async def detik_per_page(url):
 
     # Extract links from the response text using 'get_link'.
     result_link_detik = link_detik(response_text)
-    
+
     return result_link_detik
 
 async def detik_multi_page(base_url, format:str="json"):
 
-  # Create an async HTTP session and fetch the response.
+  async def get_all_info(link):
+    # Open an async session and fetch response text
+    async with aiohttp.ClientSession() as session:
+      response_text = await get_requests(url=link, session=session)
+      if response_text:
+        # Get links from the page
+        result_link_detik = await detik_per_page(url=link)
+
+        # Scrape content from the links
+        results = await tasks_detik(urls=result_link_detik)
+
+        # Extract info from the scraped data
+        all_info = data_detik(response_texts=results, links=result_link_detik)
+        return all_info
+  
+  # Create tasks to gather info from all links in base_url
+  tasks = [get_all_info(link) for link in base_url]
+  
+  # Run all tasks concurrently
+  results = await asyncio.gather(*tasks)
+
+  # Store info in a dictionary.
+  data = create_dict(resource=base_url, data=results)
+    
+  # Return data in JSON or CSV format.    
+  if format == "json":
+    print(type(data))
+    return data
+  elif format == "csv":
+    source = 'detik'
+    return csv_format(results, source)
+
+
+# KOMPAS
+async def kompas_per_page(url):
+
+  # Async with a session.
   async with aiohttp.ClientSession() as session:
-    response_text = await get_requests(url=base_url, session=session)
-    if response_text:
-      # Get links from the page and scrape details.
-      result_link_detik = await detik_per_page(url=base_url)
-      results = await scrape_urls(urls=result_link_detik)
+    response_text = await get_requests(url, session)
 
-      # Extract and index detailed info from links.
-      all_info = data_detik(response_texts=results)
+    # Extract all links from the parsed HTML content using the 'get_link' function.
+    result_link_detik = link_kompas(response_text)
 
-      # Store info in a dictionary.
-      data = create_dict(resource=base_url, data=all_info)
+    return result_link_detik
+
+async def kompas_multi_page(base_url, format:str="json"):
+
+  async def get_all_info(link):
+    # Open an async session and fetch response text
+    async with aiohttp.ClientSession() as session:
+      response_text = await get_requests(url=link, session=session)
+      if response_text:
+        # Get links from the page
+        result_link_detik = await kompas_per_page(url=link)
+
+        # Scrape content from the links
+        results = await tasks_kompas(urls=result_link_detik)
+
+        # Extract info from the scraped data
+        all_info = data_kompas(response_texts=results, links=result_link_detik)
+        return all_info
+
+  # Create tasks to gather info from all links in base_url
+  tasks = [get_all_info(link) for link in base_url]
+
+  # Run all tasks concurrently
+  results = await asyncio.gather(*tasks)
+
+  # Store info in a dictionary.
+  data = create_dict(resource=base_url, data=results)
     
   # Return data in JSON or CSV format.    
   if format == "json":
@@ -48,65 +102,54 @@ async def detik_multi_page(base_url, format:str="json"):
     return data
   elif format == "csv":
     source = 'detik'
-    return csv_format(all_info, source)
+    return csv_format(results, source)
 
-# KOMPAS
-def kompas_per_page(url, session):
-  # Sends requests with a session.
-  soup, status = get_requests(url, session)
-  # Extract all links from the parsed HTML content using the 'get_link' function.
-  result_link_kompas = link_kompas(soup)
-  return result_link_kompas
-
-def kompas_multi_page(base_url, format:str="json"):
-  with requests.Session() as session:
-    with ThreadPoolExecutor() as executor:
-      # Use lambda to pass both URL and session to the function
-      all_results_gen = executor.map(lambda url: kompas_per_page(url, session), base_url)
-  all_results = []
-  for result in all_results_gen:
-    all_results.extend(result)
-
-  # Extract detailed information and its index from all link.
-  all_info = data_kompas(all_results)
-
-  # Store all info to a dictionary.
-  data = create_dict(resource=base_url, data=all_info)
-
-  if format == "json":
-    return data
-  elif format == "csv":
-    source = 'kompas'
-    return csv_format(all_info, source)
 
 # TRIBUN
-def tribun_per_page(url, session):
-  # Sends requests with a session.
-  soup, status = get_requests(url, session)
-  # Extract all links from the parsed HTML content using the 'get_link' function.
-  result_link_tribun = link_tribun(soup)
-  return result_link_tribun
+async def tribun_per_page(url):
 
-def tribun_multi_page(base_url, format:str="json"):
-  with requests.Session() as session:
-    with ThreadPoolExecutor() as executor:
-      # Use lambda to pass both URL and session to the function
-      all_results_gen = executor.map(lambda url: tribun_per_page(url, session), base_url)
-  all_results = []
-  for result in all_results_gen:
-    all_results.extend(result)
+  # Async with a session.
+  async with aiohttp.ClientSession() as session:
+    response_text = await get_requests(url, session)
 
-  # Extract detailed information from all link.
-  all_info = data_tribun(all_results)
+    # Extract all links from the parsed HTML content using the 'get_link' function.
+    result_link_detik = link_tribun(response_text)
 
-  # Store all info to a dictionary.
-  data = create_dict(resource=base_url, data=all_info)
+    return result_link_detik
 
+async def tribun_multi_page(base_url, format:str="json"):
+
+  async def get_all_info(link):
+    # Open an async session and fetch response text
+    async with aiohttp.ClientSession() as session:
+      response_text = await get_requests(url=link, session=session)
+      if response_text:
+        # Get links from the page
+        result_link_detik = await tribun_per_page(url=link)
+
+        # Scrape content from the links
+        results = await tasks_tribun(urls=result_link_detik)
+
+        # Extract info from the scraped data
+        all_info = data_tribun(response_texts=results, links=result_link_detik)
+        return all_info
+
+  # Create tasks to gather info from all links in base_url
+  tasks = [get_all_info(link) for link in base_url]
+
+  # Run all tasks concurrently
+  results = await asyncio.gather(*tasks)
+
+  # Store info in a dictionary.
+  data = create_dict(resource=base_url, data=results)
+    
+  # Return data in JSON or CSV format.    
   if format == "json":
+    print(data)
     return data
   elif format == "csv":
-    source = 'tribun'
-    return csv_format(all_info, source)
+    source = 'detik'
+    return csv_format(results, source)
 
 # Export to CSV
 def csv_format(all_info, source):

@@ -2,6 +2,8 @@ from datetime import datetime
 
 # Main function to create the dictionary
 def create_dict(resource, data):
+
+
     # Generate current time
     generated_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
