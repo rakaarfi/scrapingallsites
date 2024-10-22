@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
+import asyncio
 
 import allsites
 import allsitesdict
@@ -24,7 +25,7 @@ class Item(BaseModel):
   format: str | None = "json"
 
 @app.post("/scrape")
-async def scraping(item:Item):
+def scraping(item:Item):
   # DETIK
   if item.source == "detik":
     if item.category == "top_news":
@@ -44,7 +45,7 @@ async def scraping(item:Item):
     elif item.category == "travel":
       site = allsites.DETIK_ALL_TRAVEL
 
-    return detik_multi_page(base_url=site, format=item.format)
+    asyncio.run(detik_multi_page(base_url=site, format=item.format))
   
   # KOMPAS
   elif item.source == "kompas":
