@@ -1,10 +1,11 @@
-import requests
+from bs4 import BeautifulSoup as bs
 from concurrent.futures import ThreadPoolExecutor
 
-from scraping.requesting import get_requests
-
-def get_links(soup):
+def get_links(response_text):
+  soup = bs(response_text, 'html.parser')
   article = soup.find('div', class_='content')
+
+  # Find all links tag
   links_tag = article.find_all('a')
 
   # List of link's pattern to exclude
@@ -16,6 +17,7 @@ def get_links(soup):
         ".com/australia-plus?utm_campaign"
     ]
 
+  # Iterate each link to an empty list
   links = []
   for i in links_tag:
     href = i.get('href')
@@ -43,9 +45,8 @@ def get_links(soup):
   return unique_links
 
 # Extract Title, Date, Author, Image URL, Content/Paragraphs
-def get_info_links(link):
-  session = requests.Session()
-  soup, status = get_requests(link, session=session)
+def get_info_links(response_text, link):
+  soup = bs(response_text, 'html.parser')
 
   info = {}
   title = None
@@ -54,71 +55,66 @@ def get_info_links(link):
   img_url = None
   content_tag = None
 
-  if status == 200:
-    article = soup.find('div', attrs={'id':'article'})
-        
-    if article:
-      # Extract Title
-      title_tag = article.find('h1', class_='f50 black2 f400 crimson')
-      title = title_tag.get_text(strip=True) if title_tag else "Title not Found"
+  article = soup.find('div', attrs={'id':'article'})
+      
+  if article:
+    # Extract Title
+    title_tag = article.find('h1', class_='f50 black2 f400 crimson')
+    title = title_tag.get_text(strip=True) if title_tag else "Title not Found"
 
-      # Extract Date
-      date_div = article.find('div', class_='grey bdr3 pb10 pt10')
-      date_tag = date_div.find('span') if date_div else "Date div not found"
-      date = date_tag.get_text() if date_tag else "Date not found"
+    # Extract Date
+    date_div = article.find('div', class_='grey bdr3 pb10 pt10')
+    date_tag = date_div.find('span') if date_div else "Date div not found"
+    date = date_tag.get_text() if date_tag else "Date not found"
 
-      # Extract Author
-      author_div = article.find('div', attrs={'id':'penulis'})
+    # Extract Author
+    author_div = article.find('div', attrs={'id':'penulis'})
+    if author_div:
+      author_tag = author_div.find('a')
+      author = author_tag.get_text() if author_tag else "Author tag not found"
+
+    else: #If id:penulis not found, find id:editor
+      author_div = article.find('div', attrs={'id':'editor'})
       if author_div:
-        author_tag = author_div.find('a')
-        author = author_tag.get_text() if author_tag else "Author tag not found"
+        author_tag = author_div.find('a') if author_div else "Editor div not found"
+        author = author_tag.get_text() if author_tag else "Editor not found"
 
-      else: #If id:penulis not found, find id:editor
-        author_div = article.find('div', attrs={'id':'editor'})
-        if author_div:
-          author_tag = author_div.find('a') if author_div else "Editor div not found"
-          author = author_tag.get_text() if author_tag else "Editor not found"
+      else: #If id:editor also not found, find another source
+        author_div = article.find('div', attrs={'class':'wfull'})
+        author_tag = author_div.find('a') if author_div else "Author from another web, div not found"
+        author = author_tag.get('title') if author_tag else "Author from another web not found"
 
-        else: #If id:editor also not found, find another source
-          author_div = article.find('div', attrs={'class':'wfull'})
-          author_tag = author_div.find('a') if author_div else "Author from another web, div not found"
-          author = author_tag.get('title') if author_tag else "Author from another web not found"
+    # Extract Image URL
+    img_url_tag = article.find('img', class_='imgfull')
+    img_url = img_url_tag.get('src') if img_url_tag else "Image URL not found"
 
-      # Extract Image URL
-      img_url_tag = article.find('img', class_='imgfull')
-      img_url = img_url_tag.get('src') if img_url_tag else "Image URL not found"
-
-      # Extract Content
-      content_tag = article.find('div', class_='side-article txt-article multi-fontsize').get_text(strip=True)
-
-    else:
-      print(f"Article div not found for link: {link}")
-
-    info['Link'] = link
-    info["Title"] = title
-    info["Date"] = date
-    info["Author"] = author
-    info["Image URL"] = img_url
-    info["Content"] = content_tag
+    # Extract Content
+    content_tag = article.find('div', class_='side-article txt-article multi-fontsize').get_text(strip=True)
 
   else:
-      print(f"Failed to extract info. Status code: {status}")
-      info["Error"] = f"Failed to extract info. Status code: {status}"
+    print(f"Article div not found for link: {link}")
+
+  info['Link'] = link
+  info["Title"] = title
+  info["Date"] = date
+  info["Author"] = author
+  info["Image URL"] = img_url
+  info["Content"] = content_tag
 
   return info
 
-def get_info_all_links(links):
+def get_info_all_links(response_texts, links):
   # Error Handling
-  def process_link(link):
+  def process_link(response_text, link):
     try:
-      info = get_info_links(link)
+      info = get_info_links(response_text, link)
       return info
     except Exception as e:
       print(f"Error extracting info from {link}: {e}")
       return None # Return None if an exception occurs
     
   # Create a thread pool to process multiple links concurrently
-  executor = ThreadPoolExecutor()
-  all_info = list(executor.map(process_link, links))
+  with ThreadPoolExecutor() as executor:
+    all_info = list(executor.map(process_link, response_texts, links))
 
   return all_info

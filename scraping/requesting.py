@@ -10,8 +10,8 @@ def get_requests(url, session:requests.Session):
 
   # Only parsing the url if status_code is 200
   if response.status_code == 200:
-      soup = bs(response.content, 'html.parser')
+      response_text = response.text
   else:
       soup = None
       print(f"Failed to get response from {url}, status code: {response.status_code}")
-  return soup, response.status_code
+  return response_text, response.status_code
