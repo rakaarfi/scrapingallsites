@@ -7,6 +7,8 @@ from scraping.requesting import get_requests
 def get_links(response_text:str):
   soup = bs(response_text, 'html.parser')
   article = soup.find('div', class_='content')
+
+  # Find all links tag
   links_tag = article.find_all('a')
 
   # List of link's pattern to exclude
@@ -18,6 +20,7 @@ def get_links(response_text:str):
         ".com/australia-plus?utm_campaign"
     ]
 
+  # Iterate each link to an empty list
   links = []
   for i in links_tag:
     href = i.get('href')
@@ -56,6 +59,7 @@ def get_info_links(response_text:str, link):
   content_tag = None
 
   article = soup.find('div', attrs={'id':'article'})
+
   if article:
     # Extract Title
     title_tag = article.find('h1', class_='f50 black2 f400 crimson')
@@ -121,6 +125,7 @@ def get_info_all_links(response_texts: str, links):
     except Exception as e:
       # Handle any errors during the extraction process
       print(f"Error extracting info from link {link} at index {index + 1}: {e}")
+      
       continue  # Skip to the next link if an error occurs
 
   return all_info, index
@@ -128,8 +133,10 @@ def get_info_all_links(response_texts: str, links):
 # Asynchronously scrape multiple URLs
 async def scrape_urls(urls):
   async with aiohttp.ClientSession() as session:
+
     # Create async tasks for each URL request
     tasks = [get_requests(url, session) for url in urls]
+
     # Await all tasks and return results
     results = await asyncio.gather(*tasks)
 

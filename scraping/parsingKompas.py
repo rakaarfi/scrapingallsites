@@ -9,7 +9,10 @@ def get_links(response_text:str):
   soup = bs(response_text, 'html.parser')
   article = soup.find('div', class_='articleList -list')
 
+  # Find all links tag
   links = article.find_all('a', class_='article-link')
+
+  # Iterate each link to an empty list
   link_list = []
   for i in links:
     link = i.get('href')
@@ -75,23 +78,33 @@ def get_info_all_links(response_texts:str, links):
   all_info = []
   # Loop through responses and links with indexing
   for index, (response_text, link)in enumerate(zip(response_texts, links)):
-    info = get_info(response_text, link)
+    try:
+      # Attempt to extract info from the response text and link
+      info = get_info(response_text, link)
 
-    print(f"Extracting {index+1} out of {len(links)}.") #Print Statement later deleted
+      print(f"Extracting {index+1} out of {len(links)}.") #Print Statement later deleted
 
-    if info:
-      info["Index"] = index + 1  # Add index to info dict
-      all_info.append(info)
+      if info:
+        info["Index"] = index + 1  # Add index to info dict
+        all_info.append(info)
 
-    print(link) #Print Statement later deleted
+      print(link) #Print Statement later deleted
+    
+    except Exception as e:
+      # Handle any exceptions that occur during extraction
+      print(f"Error extracting info from {link}: {e}")   
+      
+      continue # Skip to the next link if an error occurs   
 
   return all_info, index
 
 # Asynchronously scrape multiple URLs
 async def scrape_urls(urls):
   async with aiohttp.ClientSession() as session:
+
     # Create async tasks for each URL request
     tasks = [get_requests(url, session) for url in urls]
+    
     # Await all tasks and return results
     results = await asyncio.gather(*tasks)
 

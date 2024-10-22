@@ -17,13 +17,3 @@ async def get_requests(url, session:aiohttp.ClientSession):
     except aiohttp.ClientError as e:
         print(f"An error occured: {e}")
         return None
-
-# async def main():
-#     url = 'https://news.detik.com/indeks/'
-
-#     async with aiohttp.ClientSession() as session:
-#         response_text = await get_requests(url, session)
-#         print(response_text)
-
-# if __name__ == "__main__":
-#     asyncio.run(main())

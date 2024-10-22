@@ -7,6 +7,7 @@ from scraping.requesting import get_requests
 # Extract all links
 def get_link(response_text:str):
   soup = bs(response_text, 'html.parser')
+
   # Find all links tag
   links = (soup.find_all('a', class_='media__link') or 
            soup.find_all('a', class_='flex gap-4 group items-center'))
@@ -53,7 +54,6 @@ def get_info(response_text:str, link):
   article = soup.find('article', class_='detail')
 
   # Get Image URL
-  # img = validate_info(tag='img', classes=None, article=article).get('src')
   img_tag = article.find('img') if article else "Image tag not found"
   img = img_tag.get('src') if img_tag else "Image not found"
 
@@ -89,23 +89,33 @@ def get_info_all_links(response_texts:str, links):
   all_info = []
   # Loop through responses and links with indexing
   for index, (response_text, link)in enumerate(zip(response_texts, links)):
-    info = get_info(response_text, link)
+    try:
+      # Attempt to extract info from the response text and link
+      info = get_info(response_text, link)
 
-    print(f"Extracting {index+1} out of {len(links)}.") #Print Statement later deleted
+      print(f"Extracting {index+1} out of {len(links)}.") #Print Statement later deleted
     
-    if info:
-      info["Index"] = index + 1  # Add index to info dict
-      all_info.append(info)
+      if info:
+        info["Index"] = index + 1  # Add index to info dict
+        all_info.append(info)
 
-    print(link) #Print Statement later deleted
+      print(link) #Print Statement later deleted      
+    
+    except Exception as e:
+      # Handle any exceptions that occur during extraction
+      print(f"Error extracting info from {link}: {e}")
+
+      continue # Skip to the next link if an error occurs
 
   return all_info, index
 
 # Asynchronously scrape multiple URLs
 async def scrape_urls(urls):
   async with aiohttp.ClientSession() as session:
+
     # Create async tasks for each URL request
     tasks = [get_requests(url, session) for url in urls]
+    
     # Await all tasks and return results
     results = await asyncio.gather(*tasks)
 
